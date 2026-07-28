@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trek Expense & Settlement Engine</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f6f9; }
+        .container { max-width: 950px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; margin-bottom: 5px; }
+        .subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #34495e; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        
+        .section-box { background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .section-title { font-weight: bold; color: #2980b9; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; }
+
+        /* Summary Cards */
+        .summary-card { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; }
+        .summary-value { font-size: 24px; font-weight: bold; margin-top: 5px; }
+        .val-profit { color: #2ecc71; }
+        .val-expense { color: #e74c3c; }
+        .val-collection { color: #3498db; }
+
+        /* Member Breakdown Cards */
+        .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .m-card { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 15px; }
+        .m-title { font-weight: bold; font-size: 16px; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; margin-bottom: 10px; }
+        .m-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+
+        /* Settlement Transfers Box */
+        .settlement-box { background: #fef9e7; border: 2px solid #f1c40f; border-radius: 8px; padding: 18px; margin-bottom: 20px; }
+        .settlement-title { font-size: 16px; font-weight: bold; color: #d35400; margin-bottom: 10px; text-transform: uppercase; }
+        .transfer-list { list-style-type: none; padding: 0; margin: 0; }
+        .transfer-item { background: white; border: 1px solid #f5b041; padding: 10px 15px; border-radius: 4px; margin-bottom: 8px; font-weight: bold; color: #2c3e50; font-size: 14px; }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button { padding: 10px 16px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-collection { background-color: #2980b9; }
+        .btn-expense { background-color: #e67e22; }
+        .btn-export { background-color: #27ae60; margin-left: auto; }
+        .btn-clear { background-color: #c0392b; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
+        th { background-color: #34495e; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Trek Expense & Settlement Engine</h2>
+    <div class="subtitle">Partners: Amol, Suraj & Shrikant</div>
+
+    <!-- Trek Header -->
+    <div class="grid">
+        <div class="form-group">
+            <label for="trekName">Trek Event Name:</label>
+            <input type="text" id="trekName" placeholder="e.g., Raigad Trek" value="Raigad Trek">
+        </div>
+        <div class="form-group">
+            <label for="trekDate">Trek Date:</label>
+            <input type="date" id="trekDate">
+        </div>
+    </div>
+
+    <!-- Overall Financials Tile -->
+    <div class="summary-card">
+        <div class="summary-grid">
+            <div>
+                <div>Total Collections</div>
+                <div class="summary-value val-collection">₹<span id="totalCollection">0.00</span></div>
+            </div>
+            <div>
+                <div>Total Expenses</div>
+                <div class="summary-value val-expense">₹<span id="totalExpense">0.00</span></div>
+            </div>
+            <div>
+                <div>Net Profit (Divided by 3)</div>
+                <div class="summary-value val-profit">₹<span id="netProfit">0.00</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Partner Standings Cards -->
+    <div class="member-grid">
+        <div class="m-card">
+            <div class="m-title">Amol</div>
+            <div class="m-row"><span>Collected:</span> <strong>₹<span id="amolCol">0.00</span></strong></div>
+            <div class="m-row"><span>Spent:</span> <strong>₹<span id="amolExp">0.00</span></strong></div>
+            <div class="m-row" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">
+                <span>Net Cash Held:</span> <strong>₹<span id="amolNet">0.00</span></strong>
+            </div>
+        </div>
+        <div class="m-card">
+            <div class="m-title">Suraj</div>
+            <div class="m-row"><span>Collected:</span> <strong>₹<span id="surajCol">0.00</span></strong></div>
+            <div class="m-row"><span>Spent:</span> <strong>₹<span id="surajExp">0.00</span></strong></div>
+            <div class="m-row" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">
+                <span>Net Cash Held:</span> <strong>₹<span id="surajNet">0.00</span></strong>
+            </div>
+        </div>
+        <div class="m-card">
+            <div class="m-title">Shrikant</div>
+            <div class="m-row"><span>Collected:</span> <strong>₹<span id="shrikantCol">0.00</span></strong></div>
+            <div class="m-row"><span>Spent:</span> <strong>₹<span id="shrikantExp">0.00</span></strong></div>
+            <div class="m-row" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">
+                <span>Net Cash Held:</span> <strong>₹<span id="shrikantNet">0.00</span></strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- SMART SETTLEMENT ENGINE: WHO GIVES TO WHOM -->
+    <div class="settlement-box">
+        <div class="settlement-title">Final Cash Settlement Instructions (Who Pays Whom)</div>
+        <ul class="transfer-list" id="settlementList">
+            <li>Add collections and expenses to calculate final settlements.</li>
+        </ul>
+    </div>
+
+    <!-- ENTRY FORM 1: MONEY RECEIVED (COLLECTIONS) -->
+    <div class="section-box">
+        <div class="section-title">1. Record Money Received (Deposits / Client Fees)</div>
+        <form id="collectionForm">
+            <div class="grid">
+                <div class="form-group">
+                    <label for="collector">Money Received By:</label>
+                    <select id="collector">
+                        <option value="Amol">Amol</option>
+                        <option value="Suraj">Suraj</option>
+                        <option value="Shrikant">Shrikant</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="colAmount">Amount Received (₹):</label>
+                    <input type="number" id="colAmount" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="colNote">Note / Client Details:</label>
+                    <input type="text" id="colNote" placeholder="e.g., Client booking fee">
+                </div>
+            </div>
+            <button type="submit" class="btn-collection">Add Money Received</button>
+        </form>
+    </div>
+
+    <!-- ENTRY FORM 2: EXPENSES -->
+    <div class="section-box">
+        <div class="section-title">2. Record Trek Expenses</div>
+        <form id="expenseForm">
+            <div class="grid">
+                <div class="form-group">
+                    <label for="expCategory">Expense Category:</label>
+                    <select id="expCategory">
+                        <option value="Bus / Rent / Travel">Bus / Rent / Travel</option>
+                        <option value="Food / Meals / Hotel">Food / Meals / Hotel</option>
+                        <option value="Purchases / Equipment">Purchases / Equipment</option>
+                        <option value="Passes / Permits / Misc">Passes / Permits / Misc</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expPayer">Paid Out Of Pocket By:</label>
+                    <select id="expPayer">
+                        <option value="Amol">Amol</option>
+                        <option value="Suraj">Suraj</option>
+                        <option value="Shrikant">Shrikant</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expAmount">Amount Spent (₹):</label>
+                    <input type="number" id="expAmount" step="0.01" placeholder="0.00" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="expNote">Description / Vendor:</label>
+                <input type="text" id="expNote" placeholder="e.g., Hotel breakfast, Private bus rent">
+            </div>
+            <button type="submit" class="btn-expense">Add Expense</button>
+        </form>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-export" onclick="exportToExcel('ledgerTable')">Export Settlement (.xls)</button>
+        <button class="btn-clear" onclick="clearData()">Clear All Records</button>
+    </div>
+
+    <!-- Master Ledger Table -->
+    <h3 style="margin-top:25px;">Trek Financial Ledger</h3>
+    <table id="ledgerTable">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Category / Note</th>
+                <th>Person Involved</th>
+                <th>Collection (₹)</th>
+                <th>Expense (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="ledgerList"></tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("trekDate").valueAsDate = new Date();
+        loadTrekData();
+    });
+
+    const collectionForm = document.getElementById("collectionForm");
+    const expenseForm = document.getElementById("expenseForm");
+
+    collectionForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const entry = {
+            type: "Collection",
+            category: "Client Fee / Deposit",
+            person: document.getElementById("collector").value,
+            collection: parseFloat(document.getElementById("colAmount").value),
+            expense: 0,
+            note: document.getElementById("colNote").value || "N/A"
+        };
+        saveAndRefresh(entry);
+        collectionForm.reset();
+    });
+
+    expenseForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const entry = {
+            type: "Expense",
+            category: document.getElementById("expCategory").value,
+            person: document.getElementById("expPayer").value,
+            collection: 0,
+            expense: parseFloat(document.getElementById("expAmount").value),
+            note: document.getElementById("expNote").value || "N/A"
+        };
+        saveAndRefresh(entry);
+        expenseForm.reset();
+    });
+
+    function saveAndRefresh(entry) {
+        let entries = JSON.parse(localStorage.getItem("trek_settlement_records")) || [];
+        entries.push(entry);
+        localStorage.setItem("trek_settlement_records", JSON.stringify(entries));
+        loadTrekData();
+    }
+
+    function loadTrekData() {
+        let entries = JSON.parse(localStorage.getItem("trek_settlement_records")) || [];
+        const ledgerList = document.getElementById("ledgerList");
+        ledgerList.innerHTML = "";
+
+        let totalCol = 0, totalExp = 0;
+        let members = {
+            Amol: { col: 0, exp: 0 },
+            Suraj: { col: 0, exp: 0 },
+            Shrikant: { col: 0, exp: 0 }
+        };
+
+        entries.forEach(item => {
+            totalCol += item.collection;
+            totalExp += item.expense;
+
+            if (members[item.person]) {
+                members[item.person].col += item.collection;
+                members[item.person].exp += item.expense;
+            }
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><strong>${item.type}</strong></td>
+                <td>${item.category} (${item.note})</td>
+                <td>${item.person}</td>
+                <td style="color:#2980b9;">${item.collection > 0 ? '₹' + item.collection.toFixed(2) : '-'}</td>
+                <td style="color:#e74c3c;">${item.expense > 0 ? '₹' + item.expense.toFixed(2) : '-'}</td>
+            `;
+            ledgerList.appendChild(row);
+        });
+
+        // Totals & Profit
+        const profit = totalCol - totalExp;
+        const targetProfitPerMember = profit / 3;
+
+        document.getElementById("totalCollection").innerText = totalCol.toFixed(2);
+        document.getElementById("totalExpense").innerText = totalExp.toFixed(2);
+        document.getElementById("netProfit").innerText = `${profit.toFixed(2)} (₹${targetProfitPerMember.toFixed(2)} each)`;
+
+        // Member Individual Totals
+        let balances = {};
+        for (let name in members) {
+            let col = members[name].col;
+            let exp = members[name].exp;
+            let netHeld = col - exp; // Cash currently sitting in their hands/account
+
+            document.getElementById(`${name.toLowerCase()}Col`).innerText = col.toFixed(2);
+            document.getElementById(`${name.toLowerCase()}Exp`).innerText = exp.toFixed(2);
+            document.getElementById(`${name.toLowerCase()}Net`).innerText = netHeld.toFixed(2);
+
+            // Balance = Net Held - Target Fair Profit Share
+            // Positive balance = Holds extra money, needs to PAY others
+            // Negative balance = Short on money, needs to RECEIVE from others
+            balances[name] = netHeld - targetProfitPerMember;
+        }
+
+        calculateSettlement(balances);
+    }
+
+    // Smart Debt-Minimization Settlement Algorithm
+    function calculateSettlement(balances) {
+        let debtors = [];   // People who hold EXTRA cash and need to PAY
+        let creditors = []; // People who are SHORT and need to RECEIVE
+
+        for (let person in balances) {
+            let val = Math.round(balances[person] * 100) / 100;
+            if (val > 0.01) debtors.push({ name: person, amount: val });
+            else if (val < -0.01) creditors.push({ name: person, amount: -val });
+        }
+
+        const settlementList = document.getElementById("settlementList");
+        settlementList.innerHTML = "";
+
+        if (debtors.length === 0 && creditors.length === 0) {
+            settlementList.innerHTML = `<li class="transfer-item" style="border-color:#2ecc71; color:#27ae60;">All accounts are perfectly settled! No cash transfers needed.</li>`;
+            return;
+        }
+
+        let i = 0, j = 0;
+        while (i < debtors.length && j < creditors.length) {
+            let debtor = debtors[i];
+            let creditor = creditors[j];
+            let amount = Math.min(debtor.amount, creditor.amount);
+
+            const li = document.createElement("li");
+            li.className = "transfer-item";
+            li.innerHTML = `➡️ <strong>${debtor.name}</strong> must pay <strong>₹${amount.toFixed(2)}</strong> to <strong>${creditor.name}</strong>`;
+            settlementList.appendChild(li);
+
+            debtor.amount -= amount;
+            creditor.amount -= amount;
+
+            if (debtor.amount < 0.01) i++;
+            if (creditor.amount < 0.01) j++;
+        }
+    }
+
+    function clearData() {
+        if (confirm("Are you sure you want to clear all trek financial records?")) {
+            localStorage.removeItem("trek_settlement_records");
+            loadTrekData();
+        }
+    }
+
+    function exportToExcel(tableID) {
+        var tab = document.getElementById(tableID);
+        var html = tab.outerHTML;
+        var url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+        var link = document.createElement('a');
+        link.download = `${document.getElementById("trekName").value}_Final_Settlement.xls`;
+        link.href = url;
+        link.click();
+    }
+</script>
+
+</body>
+</html>
